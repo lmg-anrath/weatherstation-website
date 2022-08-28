@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="de">
+<head>
+	<title>Weather Dashboard</title>
+	<link rel="icon" type="image/x-icon" href="/img/logo.png">
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/dist/output.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@0.1.1"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-200">
+	<nav class="p-2 bg-purple-400 text-white flex items-center gap-4 shadow-xl">
+		<a class="hover:underline" href="/"><!-- <img src="/img/logo.png" > --><b>LMG Weather Dashboard</b></a> 
+		<a class="hover:underline" href="https://github.com/lmg-anrath/weatherstation-server/#readme">About</a>
+	</nav>
+	<div class="flex w-full flex-1">
+		<aside class="bg-neutral-100 p-2" id="sidebar">
+			<template id="template:sidebarItem">
+				<div class="p2 bg-white rounded hover:shadow px-2 py-1 font-bold cursor-pointer select-none mb-2 hover:text-purple-500" />
+			</template>
+		</aside>
+		<main class="flex-1 p-4">
+			<section class="container max-w-4xl p-2 bg-white rounded shadow-lg mb-4 prose lg:prose-lg">
+				<h1>Lise-Meitner-Gymnasium Wetterstations-Dashboard</h1>
+				<p>
+					Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum hic, mollitia ipsa quaerat,
+					nulla nihil accusamus quam quo animi nisi autem accusantium distinctio tenetur vel tempora totam
+					quis eos placeat fuga consectetur. Quibusdam cum magni assumenda sint hic minima voluptatem
+					explicabo, quam labore saepe! Dolore alias in velit eligendi cupiditate.
+				</p>
+			</section>
+			<section class="container max-w-4xl p-2 bg-white rounded shadow-lg mb-4">
+				<div>
+					<canvas id="chart" width="400" height="400" />
+				</div>
+				<div class="w-full flex items-center mt-2 gap-2 flex-wrap" id="chartControls">
+					<div class="flex-1 bg-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-500 hover:text-white font-bold hover:shadow text-center select-none" data-id="0">Day</div>
+					<div class="flex-1 bg-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-500 hover:text-white font-bold hover:shadow text-center select-none" data-id="0">Week</div>
+					<div class="flex-1 bg-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-500 hover:text-white font-bold hover:shadow text-center select-none" data-id="0">Month</div>
+					<div class="flex-1 bg-gray-200 rounded px-2 py-1 cursor-pointer hover:bg-purple-500 hover:text-white font-bold hover:shadow text-center select-none" data-id="0">Year</div>
+				</div>
+			</section>
+		</main>
+	</div>
+	<script>
+		function loadTemplate(name) {
+			return document.getElementById(`template:${name}`).content.cloneNode(true).children[0];
+		}
+
+		const sidebarElement = document.getElementById('sidebar');
+		var stationId = 0;
+		var periodId = 0;
+
+		(async () => {
+			const stations = await (await fetch('https://weatherstation.jh220.de/api/stations')).json();
+			stations.forEach((station, index) => {
+				const element = loadTemplate('sidebarItem');
+				element.innerText = station;
+				element.setAttribute('data-id', index);
+				sidebarElement.appendChild(element);
+			});
+		})();
+
+		async function updateChart() {
+			const period = ['day', 'week', 'month', 'year'][periodId];
+			const data = await (await fetch(`https://weatherstation.jh220.de/api/get?id=${stationId + 1}&d=${period}`)).json();
+
+			if (!data) return;
+
+			chart.data.datasets[0].data = data.temperature;
+			chart.data.datasets[1].data = data.humidity;
+			chart.data.datasets[2].data = data.air_pressure;
+			chart.data.datasets[3].data = data.air_particle_pm25;
+			chart.data.datasets[4].data = data.air_particle_pm10;
+		}
+
+		function loadStation(stationId) {
+			this.stationId = stationId;
+			updateChart();
+		}
+		function changePeriod(periodId) {
+			this.periodId = periodId;
+			updateChart();
+		}
+
+		sidebarElement.addEventListener('click', (e) => {
+			const stationId = e.target.getAttribute('data-id');
+			if (stationId !== null) loadStation(parseInt(stationId));
+		});
+
+		document.getElementById('chartControls').addEventListener('click', (e) => {
+			const stationId = e.target.getAttribute('data-id');
+			if (stationId !== null) changePeriod(parseInt(stationId));
+		});
+	</script>
+	<script>
+		const ctx = document.getElementById('chart').getContext('2d');
+
+		const chart = new Chart(ctx, {
+			type: 'line',
+			data: {
+				datasets: [
+					{
+						label: 'Temperatur',
+						data: [],
+						fill: true,
+						borderColor: '#D946EF',
+						yAxisID: 'y1',
+					},
+					{
+						label: 'Luftfeuchtigkeit',
+						data: [],
+						fill: true,
+						borderColor: '#9333EA',
+						yAxisID: 'y2',
+					},
+					{
+						label: 'Luftdruck',
+						data: [],
+						fill: true,
+						borderColor: '#9333EA',
+						yAxisID: 'y2',
+					},
+					{
+						label: 'Feinstaub pm25',
+						data: [],
+						fill: true,
+						borderColor: '#9333EA',
+						yAxisID: 'y2',
+					},
+					{
+						label: 'Feinstaub pm10',
+						data: [],
+						fill: true,
+						borderColor: '#9333EA',
+						yAxisID: 'y2',
+					},
+				],
+			},
+			options: {
+				maintainAspectRatio: false,
+				scales: {
+					x: {
+						type: 'timeseries',
+						time: {
+							unit: 'secods',
+						},
+					},
+					y: {
+						beginAtZero: true,
+					},
+					y1: {
+						beginAtZero: true,
+						position: 'right',
+					},
+				},
+			},
+		});
+	</script>
+</body>
+</html>

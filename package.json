@@ -1,0 +1,26 @@
+{
+  "name": "weatherstation-website",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tw:w": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lmg-anrath/weatherstation-website.git"
+  },
+  "author": "Lise-Meitner-Gymnasium, AG vom Fliegen",
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/lmg-anrath/weatherstation-website/issues"
+  },
+  "homepage": "https://github.com/lmg-anrath/weatherstation-website#readme",
+  "dependencies": {
+    "moment": "^2.29.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.4",
+    "eslint": "^8.23.0"
+  }
+}
